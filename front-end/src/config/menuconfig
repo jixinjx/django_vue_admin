@@ -1,0 +1,33 @@
+module.exports = [
+                  {
+                  name: 'AAA',
+                  sub:[{
+                      subname:'1111',
+                      path:'1'
+                  },
+                  {
+                      subname:'2222',
+                      path:'1'
+                  },
+                  {
+                      subname:'3333',
+                      path:'1'
+                  }
+                  ]
+              }, {
+                  name: 'BBB',
+                  sub:[{
+                      subname:'1111',
+                      path:'1'
+                  },
+                  {
+                      subname:'2222',
+                      path:'1'
+                  },
+                  {
+                      subname:'3333',
+                      path:'1'
+                  }
+                  ]
+              }
+]

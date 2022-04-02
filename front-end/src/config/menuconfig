@@ -1,33 +1,22 @@
 module.exports = [
                   {
-                  name: 'AAA',
+                  name: '项目情况',
                   sub:[{
-                      subname:'1111',
-                      path:'1'
-                  },
-                  {
-                      subname:'2222',
-                      path:'1'
-                  },
-                  {
-                      subname:'3333',
-                      path:'1'
+                      subname:'基础信息',
+                      path:'projectinfo'
+                  },{
+                       subname:'图表',
+                      path:'projectcharts'
                   }
+                
                   ]
               }, {
-                  name: 'BBB',
+                  name: '第二种容器',
                   sub:[{
-                      subname:'1111',
-                      path:'1'
+                      subname:'基础布局',
+                      path:'BasicLayout'
                   },
-                  {
-                      subname:'2222',
-                      path:'1'
-                  },
-                  {
-                      subname:'3333',
-                      path:'1'
-                  }
+                 
                   ]
               }
 ]

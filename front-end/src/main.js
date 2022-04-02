@@ -9,6 +9,8 @@ import 'element-ui/lib/theme-chalk/index.css';
 import NormailizeCss from 'normalize.css'
 Vue.config.productionTip = false
 Vue.use(ElementUI);
+
+
 /* eslint-disable no-new */
 new Vue({
   el: '#app',

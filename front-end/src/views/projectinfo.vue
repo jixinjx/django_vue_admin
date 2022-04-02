@@ -94,7 +94,7 @@ export default {
         add_new() {
             const that = this;
             console.log(that.form)
-
+            const token = localStorage.getItem('access.center');
             axios
                 .post('http://127.0.0.1:8000/api/projectinfo/', {
                     Project_id: that.form.Project_id,
@@ -103,14 +103,11 @@ export default {
                     status: that.form.status,
 
                 }, {
-                    auth: {
-                        username: 'root',
-                        password: '123456789'
-                    }
-                })
+                        headers: {Authorization: 'Bearer ' + token}
+                    })
                 .then(function (response) {
-                    that.info = response.data.results;
-                    alert('用户注册成功，快去登录吧！');
+                     that.search_project();
+                    alert('增加成功');
                 })
                 .catch(function (error) {
                     alert(error.message);

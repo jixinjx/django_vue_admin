@@ -3,11 +3,11 @@
         <el-card class="box-card">
   <div id="user-center">
         <h3>用户登录</h3>
-<div >{{name}}</div>
 
-<el-form ref="form" :model="form" label-width="100px">
+
+<el-form label-width="120px">
   <el-form-item label="用户名：">
-     <el-input placeholder="输入用户名" v-model="username"></el-input>
+     <el-input placeholder="输入用户名" v-model="username" ></el-input>
   </el-form-item>
   <el-form-item label="请输入密码">
  <el-input placeholder="请输入密码" v-model="password" show-password></el-input>  </el-form-item>
@@ -76,5 +76,8 @@
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
+  }
+  .el-input{
+    width: 120px;
   }
 </style>

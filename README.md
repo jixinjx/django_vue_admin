@@ -303,6 +303,35 @@ class ProjectListSerializer(serializers.ModelSerializer):
         fields = '__all__'
 ```
 
+### 序列化器新增字段
+
+想要给序列化器新曾一个日期字段
+
+```
+from rest_framework import serializers
+from center.models import Project_info
+from center.serializar.UserDescSerializer import UserDescSerializer
+
+
+class ProjectListSerializer(serializers.HyperlinkedModelSerializer ):
+    #嵌套用户信息
+    creator = UserDescSerializer(read_only=True)
+    #格式化日期
+    created = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S")
+    #新建一个自定义字段
+    created_date = serializers.SerializerMethodField(label="created_date")
+    class Meta:
+        model = Project_info
+        fields = '__all__'
+
+    #自定义字段
+    def get_created_date(self,obj):
+        created_date=obj.created.strftime('%Y-%m-%d')
+        return created_date
+```
+
+
+
 ## 创建视图集
 
 序列化器继承的 `HyperlinkedModelSerializer` 基本上与之前用的 `ModelSerializer` 差不多，区别是它自动提供了外键字段的超链接，并且默认不包含模型对象的 id 字段。
@@ -717,9 +746,9 @@ https://github.com/adamchainz/django-cors-headers
 >
 > ```
 > INSTALLED_APPS = [
->  ...,
->  "corsheaders",
->  ...,
+> ...,
+> "corsheaders",
+> ...,
 > ]
 > ```
 >
@@ -729,10 +758,10 @@ https://github.com/adamchainz/django-cors-headers
 >
 > ```
 > MIDDLEWARE = [
->  ...,
->  "corsheaders.middleware.CorsMiddleware",
->  "django.middleware.common.CommonMiddleware",
->  ...,
+> ...,
+> "corsheaders.middleware.CorsMiddleware",
+> "django.middleware.common.CommonMiddleware",
+> ...,
 > ]
 > ```
 >
@@ -1066,6 +1095,922 @@ width: 100%;
 
 然后在home.vue中引入
 
+## 组件路由
+
+先修改menuconfig
+
+```
+module.exports = [
+                  {
+                  name: '基础容器',
+                  sub:[{
+                      subname:'基础容器',
+                      path:'BasicContainer'
+                  },
+                
+                  ]
+              }, {
+                  name: '第二种容器',
+                  sub:[{
+                      subname:'基础布局',
+                      path:'BasicLayout'
+                  },
+                 
+                  ]
+              }
+]
+```
+
+然后修改index.js，动态挂载子组件
+
+```
+import Vue from 'vue'
+import Router from 'vue-router'
+import HelloWorld from '@/components/HelloWorld'
+import Home from "@/views/Home.vue";
+Vue.use(Router)
+import menus from '@/config/menuconfig'
+
+
+var routes = [
+  {
+    path: '/',
+    name: 'Home',
+    component: Home,
+    children:[],
+  }
+]
+
+menus.forEach((item) => {
+  item.sub.forEach((sub) => {
+    routes[0].children.push({
+      path: `/${sub.path}`,
+      name: sub.path,
+      component: () => import(`@/views/${sub.path}`)
+    })
+  })
+})
+
+console.log(routes)
+export default new Router({routes})
+
+```
+
+记得在home中加入route-view
+
+```
+ <el-main>
+                <router-view></router-view>
+                </el-main>
+```
+
+
+
+## 表格
+
+创建表格如下
+
+```
+<template>
+<div>
+  <el-table
+    :data="info"
+    border
+    style="width: 100%">
+    <el-table-column
+      fixed
+      prop="Project_id"
+      label="项目id"
+      width="150">
+    </el-table-column>
+    <el-table-column
+      prop="title"
+      label="项目名称"
+      width="120">
+    </el-table-column>
+    <el-table-column
+      prop="body"
+      label="内容"
+      width="120">
+    </el-table-column>
+    <el-table-column
+      prop="created"
+      label="创建时间"
+      width="120">
+    </el-table-column>
+    <el-table-column
+      prop="updated"
+      label="更新时间"
+      width="300">
+    </el-table-column>
+    <el-table-column
+      prop="status"
+      label="状态"
+      width="120">
+    </el-table-column>
+    <el-table-column
+      fixed="right"
+      label="操作"
+      width="100">
+      <template slot-scope="scope">
+        <el-button @click="handleClick(scope.row)" type="text" size="small">查看</el-button>
+        <el-button type="text" size="small">编辑</el-button>
+      </template>
+    </el-table-column>
+  </el-table>
+</div>
+</template>
+
+<script>
+import axios from 'axios';
+  export default {
+    methods: {
+      handleClick(row) {
+        console.log(row);
+      }
+    },
+
+    data() {
+      return {
+       
+        info:[]
+      }
+    },
+    mounted() {
+            axios
+                .get('http://127.0.0.1:8000/api/projectinfo/')
+                .then(response => (this.info = response.data.results))
+        console.log(this.info)
+        }
+        
+  }
+  
+</script>
+```
+
+
+
+## 创建弹窗
+
+## JWT身份验证
+
+首先 pip 安装 `djangorestframework-simplejwt` 这个 jwt 库：
+
+```
+(venv) > pip install djangorestframework-simplejwt
+```
+
+修改配置文件，使 JWT 为默认的验证机制：
+
+```
+# drf_vue_blog/settings.py
+
+...
+
+REST_FRAMEWORK = {
+    ...
+
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    )
+
+}
+```
+
+在根路由中添加 Token 的获取和刷新地址：
+
+```
+# drf_vue_blog/urls.py
+
+...
+
+from rest_framework_simplejwt.views import (
+    TokenObtainPairView,
+    TokenRefreshView,
+)
+
+urlpatterns = [
+    ...
+    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+]
+```
+
+这就完成了，毫无痛苦，这就是用一个优秀轮子的好处。
+
+Token 默认有效期很短，只有 5 分钟。你可以通过修改 Django 的配置文件进行更改：
+
+```
+# drf_vue_blog/settings.py
+
+...
+
+from datetime import timedelta
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=1),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=10),
+}
+```
+
+## ORM相关
+
+| Project_id | creator | ...  | status |
+| ---------- | ------- | ---- | ------ |
+|            |         |      |        |
+
+有这样一个表格，需要依据status进行分组
+
+```
+res = Project_info.objects.values('status').annotate(name=F('status'),value=Count("status")).values("name",'value')
+```
+
+再创造一个动作器
+
+```
+ def project_countbytimes(self, request, *args, **kwargs):
+        res = Project_info.objects.annotate(a=Cast(('created'), output_field=DateField())).values("a").annotate(name=F("a"),values=Count("a")).values("name","values")
+            # .annotate(name=Cast(('a'), output_field=DateField()),value=Count(Cast(('a'), output_field=DateField())))
+            # .value("name").annotate(name=F("name"),value=Count("value"))
+
+        return Response(data=res, status=status.HTTP_200_OK)
+```
+
+在此之中
+
+### values
+
+个人理解像是sql的select，其中的参数是选择的列名
+
+### F（）
+
+官方文档说F 动态获取对象字段的值，可以进行运算。
+
+Django 支持 F() 对象之间以及 F() 对象和常数之间的加减乘除和取余的操作。
+
+其实感觉上就是直接取值
+
+在此案例中，annotate(name='status',value=Count("status"))会报错
+
+### annotate
+
+官方文档的说法是`annotate()` 的每个参数都是一个注解，将被添加到返回的 `QuerySet` 中的每个对象。
+
+但其实感觉用起来像是起别名
+
+## echarts图表
+
+安装echarts依赖
+
+```
+npm install echarts -S
+```
+
+创建一个JS
+
+```
+import * as echarts from 'echarts/core';
+import {
+    TitleComponent,
+    TooltipComponent,
+    LegendComponent
+} from 'echarts/components';
+import { PieChart } from 'echarts/charts';
+import { LabelLayout } from 'echarts/features';
+import { CanvasRenderer } from 'echarts/renderers';
+
+echarts.use([
+    TitleComponent,
+    TooltipComponent,
+    LegendComponent,
+    PieChart,
+    CanvasRenderer,
+    LabelLayout
+]);
+
+export default class pie_Chart {
+
+data=[];
+title="";
+    constructor(echarts, id, title, rawdata) {		//echarts, id, xdata,seriesdata都是vue组件中传递过来的参数
+        this.echarts = echarts;
+        this.title=title;
+        this.data=rawdata;
+        let option = this.getOption()  	//把参数传递给方法
+        var myChart = echarts.init(document.getElementById(id));	//获取dom
+        myChart.setOption(option);     //暴露出去
+        
+    }
+
+    //获取数据
+    getData(rawdata) {
+        this.data = rawdata;
+    }
+
+    getOption() {
+        let option = {
+            title: {
+                text: this.title,
+                subtext: 'Fake Data',
+                left: 'center'
+            },
+            tooltip: {
+                trigger: 'item'
+            },
+            legend: {
+                orient: 'vertical',
+                left: 'left'
+            },
+            series: [
+                {
+                    name: 'Access From',
+                    type: 'pie',
+                    radius: '50%',
+                    data: this.data,
+                    emphasis: {
+                        itemStyle: {
+                            shadowBlur: 10,
+                            shadowOffsetX: 0,
+                            shadowColor: 'rgba(0, 0, 0, 0.5)'
+                        }
+                    }
+                }
+            ]
+        };
+        console.log(option)
+        return option;
+    }
+}
+```
+
+constructor（)是构造器，选择参数和要使用的方法
+
+然后在页面中引用
+
+```
+<template>
+<div>
+    <div id="pie" style="width: 500px; height: 500px;">
+    </div>
+
+</div>
+</template>
+
+<script>
+import axios from 'axios';
+
+import * as echarts from 'echarts/core';
+import {
+    TitleComponent,
+    TooltipComponent,
+    LegendComponent
+} from 'echarts/components';
+import {
+    PieChart
+} from 'echarts/charts';
+import {
+    LabelLayout
+} from 'echarts/features';
+import {
+    CanvasRenderer
+} from 'echarts/renderers';
+echarts.use([
+    TitleComponent,
+    TooltipComponent,
+    LegendComponent,
+    PieChart,
+    CanvasRenderer,
+    LabelLayout
+]);
+import pie_Chart from '@/utils/pie_config.js'
+export default {
+    name: 'projectcharts',
+    components: {
+
+    },
+    mounted() {
+        const that = this
+        this.pie_getdata();
+        that.test = "2222"
+        console.log(this.test);
+        //that.charts_init()
+        //  this.$nextTick(() => { // 这里的 $nextTick() 方法是为了在下次 DOM 更新循环结束之后执行延迟回调。也就是延迟渲染图表避免一些渲染问题
+        //    this.pie_getdata();
+        //           this.charts_init();
+        //       });
+
+        console.log(this.rawdata)
+    },
+    methods: {
+        pie_getdata() {
+            let that = this
+            axios
+                .get('http://127.0.0.1:8000/api/projectinfo/project_count/')
+                .then(response => (that.rawdata = response.data, that.charts_init(), console.log(that.rawdata)))
+
+        },
+        charts_init() {
+
+            new pie_Chart(echarts, 'pie', "1111", this.rawdata)
+
+        }
+    },
+    watch: {
+        // rawdata: {
+        //     //immediate: true,
+        //     deep: true,
+        //     handler(newValue, oldValue) {
+        //         this.charts_init();
+        //     }
+        // }
+    },
+    data() {
+        return {
+            rawdata: [],
+            test: '111'
+        }
+    },
+}
+</script>
+
+<style  scoped>
+
+</style>
+
+```
+
+直接new新的，这样就可以创造两个图表了
+
+同时需要在django中增加新的actions
+
+在views.py中
+
+```
+class ProjectInfoViewSet(viewsets.ModelViewSet):
+    ...
+    @action(
+        methods=["GET"], detail=False, url_name="count"
+    )
+    def project_count(self, request, *args, **kwargs):
+        res = Project_info.objects.values('status').annotate(name=F('status'),value=Count("status")).values("name",'value')
+
+        return Response(data=res, status=status.HTTP_200_OK)
+```
+
+通过action的方式添加新的接口，设置url_name
+
+### VUE渲染echarts问题
+
+直接在mounted()中通过axios获取数据并且初始化图表会出现axio的数据出不来
+
+比如
+
+```
+this.rawdata=getdata();//getdata中获取数据
+```
+
+此时console.log(this.rawdata)是没有数值，获取不到
+
+推测原因为
+
+axios异步获取，通过控制台看，会和写入操作不同步，因此有方法解决问题
+
+#### 一、在axios里面初始化
+
+```
+ methods: {
+        pie_getdata() {
+            let that = this
+            axios
+                .get('http://127.0.0.1:8000/api/projectinfo/project_count/')
+                .then(response => (that.rawdata = response.data, that.charts_init(), console.log(that.rawdata)))
+
+        },
+        charts_init() {
+
+            new pie_Chart(echarts, 'pie', "1111", this.rawdata)
+
+        }
+    },
+```
+
+修改methods,在axios里用charts_init()进行初始化，这样一定是获取数据后的初始化了
+
+#### 二、通过watch进行实时修改
+
+```
+watch: {
+            rawdata: {
+                //immediate: true,
+                deep: true,
+                handler(newValue, oldValue) {
+                    this.charts_init();
+                }
+            }
+        },
+```
+
+这样可以在rawdata改变的时候重新渲染，修改这个方法也可以做到实时渲染
+
+#### 三、promise(未尝试)
+
+```
+// 方法1
+function initEcharts () {
+    // 新建一个promise对象
+    let newPromise = new Promise((resolve) => {
+        resolve()
+    })
+    //然后异步执行echarts的初始化函数
+    newPromise.then(() => {
+        //  此dom为echarts图标展示dom
+        echarts.init(DOm)
+    })
+}
+
+// 方法2
+//这里不要用created（用mounted），created这时候还只是创建了实例，但模板还没挂载完成
+mounted() {
+   this.initData()
+}
+
+// 方法3
+//用this.$nextTick(()=>{}) (这个回调函数会在数据挂载更新完之后执行，所以可行
+this.$nextTick(() => {
+        charts = this.$echarts.init(this.$refs.echart)
+        charts.clear()
+        charts.resize()
+        charts.setOption(option)
+        this.loading = false
+ })
+```
+
+
+
+## VUE和echarts中的异步问题
+
+https://segmentfault.com/a/1190000007227305
+
+### 同步与异步
+
+① 同步
+  当用户使用 js 和浏览器发生交互时，执行到某一个模块时系统发现需要向服务器提供网络请求，这个时候，js 操作就会被阻塞，然后浏览器向服务器发送网络请求。
+  我们都知道网络请求的速度会比较慢，在此期间，不管用户执行任何操作，浏览器都不会去执行，因为此时的浏览器正在向服务器发送请求，没有空去理会别的操作，这就是同步，简单可以理解成浏览器的执行是按照某中顺序执行的，只有等上一步完成之后才会继续执行下一步操作。
+② 异步
+  异步的含义和同步恰恰相反。当用户和浏览器发生交互，执行到某一模块的时候发现需要向服务器发送网络请求时，这个时候，浏览器向服务器发送请求之后，仍然可以执行别的操作。
+  当浏览器向服务器发送的请求得到回应后，我们一般会声明一个函数，将请求的结果放到该函数中，用户执行完某些操作后再回调该函数就可以得到向服务器发送网络请求的数据。
+  这就是异步，简单的可以理解成一心二用：一边向服务器发送请求，一边执行相关的操作，最后通过回调某个函数来得到向服务器发动请求的数据。
+
+### 回调
+
+**A "callback" is any function that is called by another function which takes the first function as a parameter. （在一个函数中调用另外一个函数就是callback）**
+
+```text
+function callback() {
+    alert("I am in the callback!");
+}
+
+function work(func) {
+    alert("I am calling the callback!");
+    func(); 
+}
+
+work(callback);
+```
+
+
+
+这就是一个很简单的callback 
+
+callback 作为一个变量传入函数work 中 在work 中被调用
+
+然后来说一下callback 经常的使用场景
+
+**A lot of the time, a "callback" is a function that is called when \*something\* happens. That \*something\* can be called an "event" in programmer-speak.（很多时候 callback 都是用来执行事件驱动的任务 比如有货了通知我 |** **你到家了再叫我做饭 等等之类的 ）**
+
+
+
+**回调并不一定就是异步。他们自己并没有直接关系。**
+
+#### 同步回调
+
+**函数被作为参数传递到A函数里，在A函数执行完后再执行B**。
+
+```arcade
+function A(callback){
+    console.log("I am A");
+    callback();  //调用该函数
+}
+
+function B(){
+   console.log("I am B");
+}
+
+A(B);
+```
+
+#### 异步回调
+
+因为js是单线程的，但是有很多情况的执行步骤（ajax请求远程数据，IO等）是非常耗时的，如果一直单线程的堵塞下去会导致程序的等待时间过长页面失去响应，影响用户体验了。
+
+如何去解决这个问题呢，我们可以这么想。耗时的我们都扔给异步去做，做好了再通知下我们做完了，我们拿到数据继续往下走。
+
+```qml
+var xhr = new XMLHttpRequest();
+    xhr.open('POST', url, true);   //第三个参数决定是否采用异步的方式
+    xhr.send(data);
+    xhr.onreadystatechange = function(){
+        if(xhr.readystate === 4 && xhr.status === 200){
+                ///xxxx
+        }
+    }
+```
+
+上面是一个代码，浏览器在发起一个`ajax`请求，会单开一个线程去发起http请求，这样的话就能把这个耗时的过程单独去自己跑了，在这个线程的请求过程中，`readystate` 的值会有个变化的过程，每一次变化就触发一次`onreadystatechange` 函数，进行判断是否正确拿到返回结果。
+
+#### 最基础的异步回调实现
+
+就我目前知道两种 `回调函数` 和 `事件监听` ，其实看了阮神的 [异步编程的文章](https://link.segmentfault.com/?enc=szoeDag6RuhOWIWWTmy39Q%3D%3D.ruoY%2FERP697A0w64IpmJj%2BxRhh8%2FlrUxdQj0Bk3jv1boD%2BeD9dS2QeuSB6FJ4mHPNlpswFyOURphCyUB0liVT0eRWPhT%2FhgP18wEAjuyZbc%3D) 和下面的评论之后得出的理解。下面咱们就看看这两种异步编程的方式吧。
+
+#### 回调函数
+
+假定有三个函数
+
+```stylus
+f1()
+
+f2()
+
+f3()
+```
+
+但是，`f1`执行很耗时，而 `f2`需要在`f1`执行完之后执行。
+为了不影响 `f3`的执行，我们可以把`f2`写成`f1`的回调函数。
+
+```scss
+//最原始的写法-同步写法
+
+f1(); //耗时很长，严重堵塞
+f2(); 
+f3(); //导致f3执行受到影响
+
+
+//改进版-异步写法
+function f1(callback){
+　　setTimeout(function () {
+　　　　// f1的任务代码
+　　　　callback();
+　　}, 1000);
+}
+
+f1(f2); //
+
+f3();
+```
+
+上面的写法是利用 `setTimeOut`把`f1`的逻辑包括起来，实现`javascript`中的异步编程。这样的话，f1异步了，不再堵塞`f3`的执行。
+顺道说下，js是单线程的，这里所谓的异步也是伪异步，并不是开了多线程的异步。它是什么原理呢，其实是任务栈，`setTimeOut`方法的原理是根据后面的定时时间，过了这个定时时间后，将`f1`加入任务栈，**注意仅仅是加入任务栈，并不是放进去就执行，而是根据任务栈里的任务数量来确定的。**
+
+#### 事件监听
+
+这里我直接用阮神的例子，通过事件触发操作，就是类似于咱们点击事件里的处理逻辑。
+
+同样` f1 , f2 `两个函数。
+
+```stylus
+f1()
+
+f2()
+```
+
+`f1 `我们给它加一个事件,事件触发 `f2` 函数。
+
+```actionscript
+function f1(){
+   setTimeOut(function(){
+        f1.trigger('click');
+    })
+}
+
+f1.on('click' , f2);
+```
+
+#### 回调地狱
+
+什么是回调地狱，就是异步任务代码的回调函数不断嵌套
+
+```
+setTimeout(function() {
+    console.log('first');
+    setTimeout(function(){
+        console.log('second');
+        setTimeout(function(){
+            console.log('three');
+        }, 1000)
+    }, 1000)
+}, 1000)
+// 输出
+first
+second
+three
+```
+
+如果只是一个简单的网络请求，这种方案没有什么麻烦，但是当网络请求变得复杂的时候，就会出现回调地狱 。
+
+正因为如此，所以i出现了Promise
+
+### Promise
+
+一般使用`Promise`的方式如下：
+
+```js
+const pms = new Promise((resolve, reject) => {
+  // do sth.
+  if(isMistake) {
+    return reject(new Error('It`s a mistake'));
+  } else {
+    return resolve('You got it!');
+  }
+});
+
+pms.then(result => {
+  console.log(result);
+}).catch(error => {
+  console.error(error);
+});
+```
+
+有没有发现？和上面一种对回调函数的使用方式出奇的像？
+
+这里的`resolve`和`reject`正是两个回调函数，就如同前面一个例子里面的`handleSucceed`和`handleFailed`一样。而这两个回调函数的传入方式，从上一个例子的直接两个参数传入，变成了通过`then`方法和`catch`方法来进行传入。
+
+相比而言，`Promise`的方式更加语义化，更容易理解——给主流程留下一个承诺，在之后可以通过该承诺获得子流程的执行结果。
+
+同时，`Promise`还支持一种特殊的写法：
+
+```js
+new Promise(resolve => {
+  resolve('Hello')
+}).then(result => {
+  return `${result} world!`;
+}).then(result => {
+  console.log(result);
+});
+```
+
+上面这一段代码，将在控制台打印出`Hello world!`字符串。
+
+`Promise`的`then`方法和`catch`方法本身也是返回一个`Promise`对象的，因此可以直接进行链式调用，并且后一次的`then`方法的回调函数的参数是前一次`then`方法返回的结果。
+
+通过这种方式，你会惊喜地发现——回调地狱就这么被解决了。
+
+所以，简而言之：`Promise`就是`callback`风格的一个语法糖（Grammar sugar），它通过实现链式调用的方式来将回调函数的嵌套扁平化来达到解决回调地狱的目的。
+
+而`Promise`的诞生，也为后面更进一步的优化奠定了基础。
+
+### async/await
+
+async/await 是es7出来的， 是es6的promise的升级版，更好地处理 then链式调用，await顾名思义就是‘等一下’（等一下我这个promise异步执行完你下面的再执行）让异步编程做起来更有同步的感觉。简单理解就是，async 声明的函数内的await异步会按照同步执行顺序。
+
+【特点】
+ （1）async声明的函数的返回本质上是一个Promise，所以可以用.then
+ （2）async必须声明的是一个function，那么await就必须是在当前这个async声明的函数内部使用(而且不能在其子函数内使用)，他两个是配合使用的。
+
+（3）await顾名思义就是等待一会，当且仅当await后面声明的是一个promise还没有返回值，那么下面的程序是不会去执行的！！！让异步编程做起来更有同步的感觉。
+
+常用的申明async的方法：
+ // 函数声明
+ async function foo() {}
+ // 函数表达式
+ const foo = async function () {};
+ // 箭头函数
+ const foo = async () => {};
+
+举个例子：3秒后才执行打印，异步的代码但是同步的feel这正是async/await配合Promise要实现的效果
+
+
+
+```jsx
+const demo = async ()=>{
+    //await申明的只有是一个Promise才可以实现异步的同步执行
+    let result = await new Promise((resolve, reject) => {
+      setTimeout(()=>{
+        //do something
+      }, 3000)
+    });
+    console.log('“我等一会”上面的程序执行完我在打印');
+    return '我是返回值';
+}
+//async的返回值不管是什么类型本质是一个Promise所以可以用.then
+demo().then(result=>{
+    console.log('输出:',result); // 输出 我延迟了一秒
+}).catch((err)=>{ 
+    console.log(err);
+})
+```
+
+和上面同样的代码只是await后面不是一个Promise，直接就执行了打印，3秒后才alert，所以await后面必须是一个Promise才可以异步代码同步执行
+
+
+
+```jsx
+const demo = async ()=>{
+    //await申明的不是Promise实现不了异步的同步执行
+    let result = await setTimeout(()=>{
+       //do something
+       // resolve('我延迟了三秒')
+       alert(1)
+    }, 3000)
+    console.log('“我等一会”上面的程序执行完我在打印');
+    return '我是返回值';
+}
+//async的返回值不管是什么类型本质是一个Promise所以可以用.then
+demo().then(result=>{
+    console.log('输出:',result); // 输出 我延迟了一秒
+}).catch((err)=>{ 
+    console.log(err);
+})
+```
+
+前面介绍async/await说到，通常async/await是跟随Promise一起使用的，而axios又是基于promise封装，所以我们可以将 async/await和axios 结合一起使用。网上很多都是把axios外面又套一层promise那是不科学或者没有理解axios的本质的做法，要知道：axios是promise封装的，本质就是一个promise，所以没必要去套一层promise
+
+
+
+```jsx
+    const demo =async () => {
+        //第一个异步promise（axios）接口请求数据
+        const result1 = await this.$axios({
+          method: 'post',
+          dataType: 'json',
+          url: '/customer/selectListByPage', 
+          data:{}
+        })
+        console.log(result1)
+        //第二个异步promise（axios）接口请求数据
+        const result2 = await this.$axios({
+          method: 'post',
+          dataType: 'json',
+          url: '/customer/selectListByPage', 
+          data:{}
+        })
+        console.log(result2)
+        //返回值实质上是一个promise
+        return result1+result2
+    }
+    //调用
+    demo().then(result=>{
+      console.log('输出:',result); 
+    }).catch((err)=>{ 
+      console.log(err);
+    })
+```
+
+还可以写成
+
+
+
+```jsx
+    const getData1 = (data) => {
+        //需要return保证async里面await调用的是一个promise
+        return this.$axios({
+          method: 'post',
+          dataType: 'json',
+          url: '/customer/selectListByPage', 
+          data:{}
+        })
+    }
+    const getData2 = (data) => {
+        //需要return保证async里面await调用的是一个promise
+        return this.$axios({
+          method: 'post',
+          dataType: 'json',
+          url: '/customer/selectListByPage', 
+          data:{}
+        })
+    }
+    //async/await实例
+    const demo =async () => {
+        //第一个异步promise（axios）接口请求数据
+        const result1 = await getData1()
+        console.log(result1)
+
+        //第二个异步promise（axios）接口请求数据
+        const result2 = await getData2()
+        console.log(result2)
+
+        //返回值实质上是一个promise
+        return result1+result2
+    }
+    //调用
+    demo().then(result=>{
+      console.log('输出:',result); 
+    }).catch((err)=>{ 
+      console.log(err);
+    })
+```
+
+
+
 ## CSS
 
 居中设置
@@ -1078,3 +2023,6 @@ width: 100%;
     transform: translate(0%, -50%);
 ```
 
+## VUE
+
+https://zhuanlan.zhihu.com/p/260523407

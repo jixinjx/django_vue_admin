@@ -1,7 +1,7 @@
 <template>
 <div id="app_div">
     <el-container>
-        <el-header><Header /></el-header>
+        <el-header><Pheader /></el-header>
         <div id="app_div">
         <el-container>
             <el-aside width="200px" >
@@ -18,11 +18,11 @@
 
 <script>
 import NavMenu from '@/components/NavMenu'
-import Header from '@/components/Header'
+import Pheader from '@/components/Header'
 export default {
     name: 'Home',
      components: {'navmenu': NavMenu,
-                'Header':Header,
+                'Pheader':Pheader,
   }
 }
 </script>

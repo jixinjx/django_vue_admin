@@ -16,7 +16,7 @@ from rest_framework import filters
 from rest_framework.decorators import action
 from django.db.models import Avg, Max, Min, Count, Sum, CharField, DateField  # 引入函数
 from django.db.models import F
-
+from center.permissions import IsAdminUserOrReadOnly
 
 class ProjectInfoViewSet(viewsets.ModelViewSet):
     queryset = Project_info.objects.all()
@@ -29,6 +29,8 @@ class ProjectInfoViewSet(viewsets.ModelViewSet):
     # 搜索
     filter_backends = [filters.SearchFilter]
     search_fields = ['title']
+    #设置权限
+    permission_classes = [IsAdminUserOrReadOnly]
 
     def perform_create(self, serializer):
         # 绑定

@@ -25,7 +25,7 @@
 <script>
 
   import axios from 'axios';
-   import authorization from '@/utils/authorization';
+  import authorization from '@/utils/authorization';
       const storage = localStorage;
     export default {
         

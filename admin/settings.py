@@ -9,7 +9,7 @@ https://docs.djangoproject.com/en/4.0/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.0/ref/settings/
 """
-
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -25,7 +25,6 @@ SECRET_KEY = 'django-insecure-%ge7ym#md6+s08b^v(cyxx(j%qfsel1_i_b=+oyi4o423jcc!2
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
 
 
 # Application definition
@@ -86,8 +85,8 @@ ROOT_URLCONF = 'admin.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates']
-        ,
+        #'DIRS': [BASE_DIR / 'templates'],
+        'DIRS': [os.path.join(BASE_DIR,'front-end/dist')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -126,6 +125,19 @@ DATABASES = {
         },
     }
 }
+# DATABASES = {
+#     'default': {
+#          'ENGINE': 'django.db.backends.mysql',  # 换成mysql或其他
+#         'NAME': 'jixinjx$center',
+#         'USER': 'jixinjx',
+#         'PASSWORD': 'jixin47895230',
+#         'HOST': 'jixinjx.mysql.pythonanywhere-services.com',
+#         'PORT': 3306,
+#         'OPTIONS': {
+#             'autocommit': True,
+#         },
+#     }
+# }
 
 
 # Password validation
@@ -163,7 +175,12 @@ USE_TZ = False
 # https://docs.djangoproject.com/en/4.0/howto/static-files/
 
 STATIC_URL = 'static/'
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, "front-end/dist/static"),
+]
 
+# 新增项。静态文件收集目录
+STATIC_ROOT = os.path.join(BASE_DIR, 'collected_static')
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field
 

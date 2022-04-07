@@ -46,10 +46,10 @@ export default {
       async  pie_getdata() {
             let that = this
             axios.all([ axios
-                .get('http://127.0.0.1:8000/api/projectinfo/project_count/')
+                .get(process.env.VUE_APP_API_URL+'api/projectinfo/project_count/')
                 .then(response => (that.rawdata = response.data,  console.log(that.rawdata))),
             axios
-                .get('http://127.0.0.1:8000/api/projectinfo/project_countbytimes/')
+                .get(process.env.VUE_APP_API_URL+'api/projectinfo/project_countbytimes/')
                 .then(response => (that.line_data = response.data, console.log(that.line_data)))])
            .then(axios.spread((val1,val2) =>{console.log("axios")}))
 
@@ -61,7 +61,7 @@ return new Promise((resolve, reject) => {
     //注：Promise实例只能通过resolve 或 reject 函数来返回，并用then()或者catch()获取
     //不能在里面直接return ... 这样是获取不到Promise返回值的
     axios
-                .get('http://127.0.0.1:8000/api/projectinfo/project_count/')
+                .get(process.env.VUE_APP_API_URL+'api/projectinfo/project_count/')
                 .then(response => (that.rawdata = response.data, this.pie_Chart_init(), console.log("Promise1")))
                 
     setTimeout(() => resolve('promise1-result'), 1000)
@@ -74,7 +74,7 @@ return new Promise((resolve, reject) => {
     //注：Promise实例只能通过resolve 或 reject 函数来返回，并用then()或者catch()获取
     //不能在里面直接return ... 这样是获取不到Promise返回值的
     axios
-                .get('http://127.0.0.1:8000/api/projectinfo/project_countbytimes/')
+                .get(process.env.VUE_APP_API_URL+'api/projectinfo/project_countbytimes/')
                 .then(response => (that.line_data = response.data,  this.line_Chart_init(),console.log("Promise2")))
                
     setTimeout(() => resolve('promise1-result'), 1000)

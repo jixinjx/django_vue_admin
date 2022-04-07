@@ -2065,3 +2065,236 @@ demo().then(result=>{
 ## VUE
 
 https://zhuanlan.zhihu.com/p/260523407
+
+## VUE设置不同环境的环境变量
+
+为了解决生产环境和测试环境不同的url需求
+
+先看package.json
+
+```
+ "scripts": {
+    "dev": "webpack-dev-server --inline --progress --config build/webpack.dev.conf.js",
+    "start": "npm run dev",
+    "unit": "jest --config test/unit/jest.conf.js --coverage",
+    "e2e": "node test/e2e/runner.js",
+    "test": "npm run unit && npm run e2e",
+    "build": "node build/build.js"
+  },
+```
+
+可以发现dev会调用dev.config.js，所以到这个文件中发现
+
+```
+  plugins: [
+    new webpack.DefinePlugin({
+      'process.env': require('../config/dev.env')
+    }),
+    new webpack.HotModuleReplacementPlugin(),
+    new webpack.NamedModulesPlugin(), // HMR shows correct file names in console on update.
+    new webpack.NoEmitOnErrorsPlugin(),
+    // https://github.com/ampedandwired/html-webpack-plugin
+    new HtmlWebpackPlugin({
+      filename: 'index.html',
+      template: 'index.html',
+      inject: true
+    }),
+    // copy custom static assets
+    new CopyWebpackPlugin([
+      {
+        from: path.resolve(__dirname, '../static'),
+        to: config.dev.assetsSubDirectory,
+        ignore: ['.*']
+      }
+    ])
+  ]
+```
+
+又使用了'../config/dev.env'
+
+于是修改这个文件，设置环境变量，记得单引号里面加双引号
+
+```
+'use strict'
+const merge = require('webpack-merge')
+const prodEnv = require('./prod.env')
+
+module.exports = merge(prodEnv, {
+  NODE_ENV: '"development"',
+  VUE_APP_API_URL:'"http://127.0.0.1:8000/"'
+})
+
+```
+
+
+
+## VUE嵌入到django中
+
+1.首先修改VUE中的设置
+
+在config目录下，修改index.js,将assetsPublicPath改为'./'
+
+```
+
+  build: {
+    // Template for index.html
+    index: path.resolve(__dirname, '../dist/index.html'),
+
+    // Paths
+    assetsRoot: path.resolve(__dirname, '../dist'),
+    assetsSubDirectory: 'static',
+    assetsPublicPath: '/',
+    ...
+}
+```
+
+或者在主目录下直接创造一个vue.config.js文件
+
+```
+
+module.exports ={
+    publicPath:'./'
+}
+```
+
+
+
+2.npm run build 生成dist文件
+
+更改setting.py文件，修改DIRS配置，将其设置为dist路径，并增加STATICFILES_DIRS等路径
+
+```
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        #'DIRS': [BASE_DIR / 'templates'],
+        'DIRS': [os.path.join(BASE_DIR,'front-end/dist')],
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'context_processors': [
+                'django.template.context_processors.debug',
+                'django.template.context_processors.request',
+                'django.contrib.auth.context_processors.auth',
+                'django.contrib.messages.context_processors.messages',
+            ],
+        },
+    },
+]
+
+
+STATIC_URL = 'static/'
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, "front-end/dist/static"),
+]
+
+# 新增项。静态文件收集目录
+STATIC_ROOT = os.path.join(BASE_DIR, 'collected_static')
+```
+
+
+
+## 部署到pythonanywhere
+
+1.申请免费的PythonAnyWhere账号
+网址：[https://www.pythonanywhere.com/](https://link.segmentfault.com/?enc=3geBPSp%2BjqyFevVVTKQYZw%3D%3D.ffP9pyIPThcCGaEt1bVGeyGI72%2B2Yhc1f5JYUGKHgRo%3D)
+免费的账号只能建一个站。站名只能为XXX.pythonanywhere.com。其中XXX代表注册账户时所用的用户名。站点只能维持2个月，2个月后就会被删除。
+
+2.将GitHub上的项目发送至PythonAnyWhere
+3.1 在PythonAnyWhere中，点击 “Consoles” –> start a “Bash” console
+这个Bash是类似于Linux系统里的“终端”。
+3.2 在这个新建的Bash里面输入：
+注意：如下代码表示需要在PythonAnyWhere的Bash中执行！！
+
+```awk
+$ git clone https://github.com/<your-github-username>/my-first-blog.git
+```
+
+这个步骤将GitHub的项目发送到PythonAnyWhere。注意上面的这个链接就是GitHub里项目的仓库地址：
+
+上传时需要把dist打包的文件也一起上传
+
+3.为PythonAnyWhere里的项目创建virtual environment
+继续在PythonAnyWhere的Bash里执行下面的命令,以创建一个名为myvenv的虚拟环境。
+注意：如下代码表示需要在PythonAnyWhere的Bash中执行！！
+
+```shell
+$ cd my-first-blog
+$ virtualenv --python=python3.9 myvenv
+$ source myvenv/bin/activate
+(myvenv) $ pip install -r requirements.txt
+```
+
+执行最后一步前，需要先打包django中的库
+
+导出项目所安装的包：
+命令：pip freeze > requirements.txt
+注意：requirements.txt的内容是项目所安装的包；
+
+4.在 Database 中新建 mysql 数据库，默认生成数据库格式 username$database_name ，有个美元符，再创建数据库密码，之后 django 配置会用到。
+
+5.第五步：创建 Web app 和配置 WSGI  文件
+
+Web 卡片项，选择手动配置，填完相关信息后容器 app 自动创建。看到 Code 选项，填入相关信息：
+
+```python
+Source code：项目文件目录
+Working directory：/home/username/
+WSGI configuration file：/var/www/username_pythonanywhere_com_wsgi.py
+```
+
+
+
+打开 WSGI configuration file 这个文件，填入如下信息：
+
+```python
+import os
+import sys
+path = '/home/myusername/mysite' #(含有manage.py的上一级目录)
+if path not in sys.path:
+    sys.path.append(path)
+os.environ['DJANGO_SETTINGS_MODULE'] = 'mysite.settings'
+###### then, for Django >=1.5:
+from django.core.wsgi import get_wsgi_application
+application = get_wsgi_application()
+###### or, for older Django <=1.4
+#import django.core.handlers.wsgi
+#application = django.core.handlers.wsgi.WSGIHandler()
+```
+
+
+
+进入项目中寻找 settings.py 文件，配置数据库：
+
+```python
+DATABASES = {
+        'default': {
+              'ENGINE': 'django.db.backends.mysql',
+              'NAME': 'username$database_name',
+              'USER': 'username',
+              'PASSWORD': '数据库密码',
+              'HOST': 'username.mysql.pythonanywhere-services.com',
+                   }
+            }
+ALLOWED_HOSTS = ['username.pythonanywhere.com']
+```
+
+
+
+7.创建表和后台管理账号
+
+在 consoles 中，激活虚拟环境创建表和超级用户，命令如下：
+
+```
+python manage.py migrate(创建表)`
+ `python manage.py createsuperuser(创建超级用户)`
+ `python manage.py collectstatic(收集静态文件js、css、图片)
+```
+
+10, 如何将GitHub里项目的修改反馈到PythonAnyWhere？
+项目又要修改的时候，通常是在本地计算机修改，修改好之后发布到GitHub，之后发布到PythonAnyWhere。当GitHub里项目修改好之后，在PythonAnyWhere的Bash里面输入下面两行代码就可以同步了：
+注意：如下代码表示需要在PythonAnyWhere的Bash中执行！！
+
+```applescript
+cd my-first-blog
+git pull
+```

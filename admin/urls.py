@@ -14,8 +14,10 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
+from django.template.defaulttags import url
 from django.urls import path
 from django.urls import include
+from django.views.generic import TemplateView
 from rest_framework.routers import DefaultRouter
 from center import views
 router = DefaultRouter()
@@ -33,5 +35,6 @@ urlpatterns = [
     path('api/', include(router.urls)),
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path(r'', TemplateView.as_view(template_name="index.html")),
     #path('api/project_info/', include('center.urls', namespace='center')),
 ]

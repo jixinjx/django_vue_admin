@@ -20,7 +20,7 @@ async function authorization() {
     // 申请刷新 token
     else if (refreshToken !== null) {
         try {
-            let response = await axios.post('http://127.0.0.1:8000/api/token/refresh/', {refresh: refreshToken});
+            let response = await axios.post(process.env.VUE_APP_API_URL+'api/token/refresh/', {refresh: refreshToken});
 
             const nextExpiredTime = Date.parse(response.headers.date) + 60000;
 

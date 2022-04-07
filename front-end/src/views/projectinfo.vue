@@ -75,20 +75,22 @@ export default {
             console.log(row);
         },
         search_project() {
+            
             const text = this.search_text.trim();
             let that=this;
+            console.log(that.env)
             if (text.charAt(0) !== '') {
                 axios
-                    .get('http://127.0.0.1:8000/api/projectinfo/' + '?search=' + text)
+                    .get(process.env.VUE_APP_API_URL+'api/projectinfo/' + '?search=' + text)
                     .then(response => (this.info = response.data.results, that.page_count=response.data.total_pages,that.page_current=response.data.page_number))
-                    that.project_info_url='http://127.0.0.1:8000/api/projectinfo/' + '?search=' + text
+                    that.project_info_url=process.env.VUE_APP_API_URL+'api/projectinfo/' + '?search=' + text
                     
                 console.log(this.info)
             } else {
                 axios
-                    .get('http://127.0.0.1:8000/api/projectinfo/')
+                    .get(process.env.VUE_APP_API_URL+'api/projectinfo/')
                     .then(response => (this.info = response.data.results, that.page_count=response.data.total_pages,that.page_current=response.data.page_number))
-                     that.project_info_url='http://127.0.0.1:8000/api/projectinfo/'
+                     that.project_info_url=process.env.VUE_APP_API_URL+'api/projectinfo/'
             }
         },
         add_new() {
@@ -96,7 +98,7 @@ export default {
             console.log(that.form)
             const token = localStorage.getItem('access.center');
             axios
-                .post('http://127.0.0.1:8000/api/projectinfo/', {
+                .post(process.env.VUE_APP_API_URL+'api/projectinfo/', {
                     Project_id: that.form.Project_id,
                     title: that.form.title,
                     body: that.form.body,
@@ -145,6 +147,7 @@ export default {
 
     data() {
         return {
+            url:process.env.VUE_APP_API_URL,
             project_info_url:"http://127.0.0.1:8000/api/projectinfo/",
             mounted_status:false,
             search_status:false,
@@ -169,7 +172,7 @@ export default {
     mounted() {
         let that=this;
         axios
-            .get('http://127.0.0.1:8000/api/projectinfo/')
+            .get(process.env.VUE_APP_API_URL+'api/projectinfo/')
             .then(response => (that.info = response.data.results, that.page_count=response.data.total_pages),
             that.mounted_status=true)
         console.log(that.info)
